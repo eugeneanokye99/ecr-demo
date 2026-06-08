@@ -1,6 +1,7 @@
 .git
 .github
-target
+target/
+!target/*.jar
 .idea
 .vscode
 *.log
