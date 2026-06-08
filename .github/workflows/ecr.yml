@@ -34,14 +34,14 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build \
-          -t eugene_ecr-demo .
+          -t eugene/ecr-demo .
 
       - name: Tag Docker Image
         run: |
-          docker tag eugene_ecr-demo:latest \
-          ${{ steps.login-ecr.outputs.registry }}/eugene_ecr-demo:latest
+          docker tag eugene/ecr-demo:latest \
+          ${{ steps.login-ecr.outputs.registry }}/eugene/ecr-demo:latest
 
       - name: Push Image
         run: |
           docker push \
-          ${{ steps.login-ecr.outputs.registry }}/eugene_ecr-demo:latest
+          ${{ steps.login-ecr.outputs.registry }}/eugene/ecr-demo:latest
