@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ECR Demo Lab — provisions an ECR repository, a GitHub Actions OIDC identity
+  provider, and the least-privilege IAM role used by the CI/CD pipeline.
+
+# ─── Parameters ──────────────────────────────────────────────────────────────
+Parameters:
+  GitHubOrg:
+    Type: String
+    Description: GitHub username or organisation that owns the repository.
+
+  GitHubRepo:
+    Type: String
+    Default: ecr-demo
+    Description: Name of the GitHub repository.
+
+  ECRRepositoryName:
+    Type: String
+    Default: eugene_ecr-demo
+    Description: Name for the ECR private repository.
+
+# ─── Resources ───────────────────────────────────────────────────────────────
+Resources:
+
+  # 1. ECR Repository ─────────────────────────────────────────────────────────
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ECRRepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 10 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: ECR-Lab
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # 2. GitHub Actions OIDC Identity Provider ──────────────────────────────────
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea
+      Tags:
+        - Key: Project
+          Value: ECR-Lab
+
+  # 3. IAM Role for GitHub Actions ────────────────────────────────────────────
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GitHub-ECR-Push-Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GitHubOIDCProvider.Arn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+              StringLike:
+                "token.actions.githubusercontent.com:sub":
+                  !Sub "repo:${GitHubOrg}/${GitHubRepo}:*"
+      Policies:
+        - PolicyName: ECRLeastPrivilege
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # GetAuthorizationToken is account-level — must be *
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              # All image operations are scoped to the single repository
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                  - ecr:BatchGetImage
+                Resource: !GetAtt ECRRepository.Arn
+      Tags:
+        - Key: Project
+          Value: ECR-Lab
+
+# ─── Outputs ─────────────────────────────────────────────────────────────────
+Outputs:
+  ECRRepositoryURI:
+    Description: Full URI of the ECR repository.
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepositoryName}"
+    Export:
+      Name: ECRRepositoryURI
+
+  GitHubActionsRoleARN:
+    Description: ARN of the IAM role — add this as the AWS_ROLE_ARN secret in GitHub.
+    Value: !GetAtt GitHubActionsRole.Arn
+    Export:
+      Name: GitHubActionsRoleARN
+
+  OIDCProviderARN:
+    Description: ARN of the GitHub OIDC identity provider.
+    Value: !GetAtt GitHubOIDCProvider.Arn
