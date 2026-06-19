@@ -1,18 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  ECR Demo Lab — provisions an ECR repository, a GitHub Actions OIDC identity
-  provider, and the least-privilege IAM role used by the CI/CD pipeline.
+  ECR Demo Lab — provisions a private ECR repository with scan-on-push,
+  AES256 encryption, and a lifecycle rule that retains the last 10 images.
 
 Parameters:
-  GitHubOrg:
-    Type: String
-    Description: GitHub username or organisation that owns the repository.
-
-  GitHubRepo:
-    Type: String
-    Default: ecr-demo
-    Description: Name of the GitHub repository.
-
   ECRRepositoryName:
     Type: String
     Default: eugene_ecr-demo
@@ -29,21 +20,10 @@ Resources:
       EncryptionConfiguration:
         EncryptionType: AES256
       LifecyclePolicy:
-        LifecyclePolicyText: |
-          {
-            "rules": [
-              {
-                "rulePriority": 1,
-                "description": "Keep last 10 images",
-                "selection": {
-                  "tagStatus": "any",
-                  "countType": "imageCountMoreThan",
-                  "countNumber": 10
-                },
-                "action": { "type": "expire" }
-              }
-            ]
-          }
+        LifecyclePolicyText: >
+          {"rules":[{"rulePriority":1,"description":"Keep last 10 images",
+          "selection":{"tagStatus":"any","countType":"imageCountMoreThan",
+          "countNumber":10},"action":{"type":"expire"}}]}
       Tags:
         - Key: Project
           Value: ECR-Lab

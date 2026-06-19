@@ -1,9 +1,5 @@
-template-file-path: ./ecr-cfn/infrastructure.yml
+template-file-path: ./infrastructure.yml
 parameters:
-  - parameter-key: GitHubOrg
-    parameter-value: EugeneDokyeAnokye
-  - parameter-key: GitHubRepo
-    parameter-value: ecr-demo
   - parameter-key: ECRRepositoryName
     parameter-value: eugene_ecr-demo
 tags:
