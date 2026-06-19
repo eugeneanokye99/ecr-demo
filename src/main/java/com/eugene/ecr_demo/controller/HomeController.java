@@ -8,6 +8,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Docker + ECR Lab Successfully";
+        return "Docker + ECR Lab Successfully(lab review)";
     }
 }
