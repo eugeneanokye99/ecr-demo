@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ECR Demo Lab — provisions an ECR repository, a GitHub Actions OIDC identity
+  provider, and the least-privilege IAM role used by the CI/CD pipeline.
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Description: GitHub username or organisation that owns the repository.
+
+  GitHubRepo:
+    Type: String
+    Default: ecr-demo
+    Description: Name of the GitHub repository.
+
+  ECRRepositoryName:
+    Type: String
+    Default: eugene_ecr-demo
+    Description: Name for the ECR private repository.
+
+Resources:
+
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ECRRepositoryName
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 10 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 10
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: ECR-Lab
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  ECRRepositoryURI:
+    Description: Full URI of the ECR repository.
+    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ECRRepositoryName}"
+    Export:
+      Name: ECRRepositoryURI

@@ -1,0 +1,15 @@
+template-file-path: ./ecr-cfn/infrastructure.yml
+parameters:
+  - parameter-key: GitHubOrg
+    parameter-value: EugeneDokyeAnokye
+  - parameter-key: GitHubRepo
+    parameter-value: ecr-demo
+  - parameter-key: ECRRepositoryName
+    parameter-value: eugene_ecr-demo
+tags:
+  - key: Project
+    value: ECR-Lab
+  - key: Environment
+    value: production
+  - key: ManagedBy
+    value: CloudFormation
