@@ -1,11 +1,3 @@
-template-file-path: ./infrastructure.yml
+template-file-path: infrastructure.yml
 parameters:
-  - parameter-key: ECRRepositoryName
-    parameter-value: eugene_ecr-demo
-tags:
-  - key: Project
-    value: ECR-Lab
-  - key: Environment
-    value: production
-  - key: ManagedBy
-    value: CloudFormation
+  ECRRepositoryName: eugene_ecr-demo

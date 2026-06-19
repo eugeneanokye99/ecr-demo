@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: >
-  ECR Demo Lab — provisions a private ECR repository with scan-on-push,
-  AES256 encryption, and a lifecycle rule that retains the last 10 images.
+Description: ECR Demo Lab - private ECR repository with scan-on-push enabled.
 
 Parameters:
   ECRRepositoryName:
@@ -10,7 +8,6 @@ Parameters:
     Description: Name for the ECR private repository.
 
 Resources:
-
   ECRRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -20,10 +17,7 @@ Resources:
       EncryptionConfiguration:
         EncryptionType: AES256
       LifecyclePolicy:
-        LifecyclePolicyText: >
-          {"rules":[{"rulePriority":1,"description":"Keep last 10 images",
-          "selection":{"tagStatus":"any","countType":"imageCountMoreThan",
-          "countNumber":10},"action":{"type":"expire"}}]}
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Keep last 10 images","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}'
       Tags:
         - Key: Project
           Value: ECR-Lab
